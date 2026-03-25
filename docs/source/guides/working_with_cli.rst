@@ -65,3 +65,25 @@ Verify your setup by running the ``estimate`` command, which fetches metadata an
     noether-data aws estimate noaa-goes16 ABI-L1b-RadC/2023/001/00/
 
 If you see no errors — congratulations, your setup works!
+
+Scaffolding a New Project
+-------------------------
+
+The ``noether-init`` command scaffolds a minimal Noether training project, including all required modules and configurations.
+
+.. code-block:: bash
+
+   uv run noether-init my_project
+
+**Required:**
+
+- ``project_name`` (positional) — project name, must be a valid Python identifier
+
+**Optional:**
+
+- ``--tracker, -t`` — experiment tracker: ``disabled`` (default), ``wandb``, ``trackio``, ``tensorboard``
+- ``--hardware`` — hardware target: ``gpu`` (default), ``mps``, ``cpu``
+- ``--project-dir, -d`` — parent directory for the project folder
+- ``--wandb-entity`` — W&B entity name (only used with ``--tracker wandb``)
+
+For all available options, see :doc:`/tutorials/scaffolding_a_new_project`.

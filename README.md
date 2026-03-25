@@ -123,7 +123,29 @@ You might be in a situation when your venv won't be configured as intended anymo
 ---
 # Quickstart
 
-You can run a training job immediately using the [tutorial](./tutorial/README.MD) configuration. For local development (Mac/CPU), use:
+## Scaffold a New Project
+
+You can get started with scaffolding a project directly with `uvx`:
+
+```console
+uvx --from emmiai-noether noether-init my_project
+cd my_project
+uv run noether-train --hp my_project/configs/base_experiment.yaml
+```
+
+Or if you have `emmiai-noether` already installed:
+
+```console
+uv run noether-init my_project
+cd my_project
+uv run noether-train --hp my_project/configs/base_experiment.yaml
+```
+
+See the [scaffolding tutorial](https://noether-docs.emmi.ai/tutorials/scaffolding_a_new_project.html) for all options and the generated project structure.
+
+## Run the Tutorial Example
+
+You can also run a training job immediately using the [tutorial](./tutorial/README.MD) configuration:
 
 ```console
 uv run noether-train --hp tutorial/configs/train_shapenet.yaml \

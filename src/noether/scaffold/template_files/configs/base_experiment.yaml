@@ -1,15 +1,15 @@
 # @package _global_
 
-dataset_kind: boilerplate_project.datasets.BaseDataset
+dataset_kind: __PROJECT__.datasets.BaseDataset
 
 defaults:
-  - tracker: disabled
+  - tracker: __TRACKER__
   - _self_
 
 output_path: ./outputs
 
 model:
-  kind: boilerplate_project.models.BaseModel
+  kind: __PROJECT__.models.BaseModel
   name: base_model_boilerplate
   hidden_dim: 128
   dropout: 0.1
@@ -21,12 +21,12 @@ model:
     schedule_config:
       kind: noether.core.schedules.LinearWarmupCosineDecaySchedule
       warmup_percent: 0.10
-      end_value: 1.0e-6 
+      end_value: 1.0e-6
   input_dim: 2
   output_dim: 10
 
 trainer:
-  kind: boilerplate_project.trainer.BoilerplateTrainer
+  kind: __PROJECT__.trainer.BoilerplateTrainer
   precision: float32
   max_epochs: 50
   effective_batch_size: 8
@@ -41,7 +41,7 @@ trainer:
     save_weights: false
     save_latest_weights: true
     save_latest_optim: true
-  - kind: boilerplate_project.callbacks.BoilerplateCallback
+  - kind: __PROJECT__.callbacks.BoilerplateCallback
     dataset_key: test
     every_n_epochs: 1
     batch_size: 1

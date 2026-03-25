@@ -2,8 +2,8 @@
 
 import torch
 import torch.nn as nn
+from __PROJECT__.schemas.models.base_model_config import BaseModelConfig
 
-from boilerplate_project.schemas.models.base_model_config import BaseModelConfig
 from noether.core.models import Model
 
 ACTIVATION_FUNCTIONS = {

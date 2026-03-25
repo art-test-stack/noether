@@ -4,8 +4,8 @@ import math
 from dataclasses import dataclass
 
 import torch
+from __PROJECT__.schemas.datasets.base_dataset_config import BaseDatasetConfig
 
-from boilerplate_project.schemas.datasets.base_dataset_config import BaseDatasetConfig
 from noether.data import Dataset
 
 
