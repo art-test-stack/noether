@@ -10,13 +10,13 @@ from typing import Annotated, Any, Literal, TypeVar
 import torch
 from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
 
-from noether.core.schemas.dataset import DatasetBaseConfig
+from noether.core.models.base import ModelBaseConfig
 from noether.core.schemas.lib import Discriminated
-from noether.core.schemas.models import ModelBaseConfig
-from noether.core.schemas.slurm import SlurmConfig
-from noether.core.schemas.trackers import BaseTrackerConfig
-from noether.core.schemas.trainers import BaseTrainerConfig
+from noether.core.trackers import BaseTrackerConfig
 from noether.core.utils.common import validate_path
+from noether.data.base.dataset import DatasetBaseConfig
+from noether.training.cli.submit_job import SlurmConfig
+from noether.training.trainers import BaseTrainerConfig
 
 ACCELERATOR_TYPES = Literal["cpu", "gpu", "mps"]
 
