@@ -1,5 +1,8 @@
 #  Copyright © 2025 Emmi AI GmbH. All rights reserved.
 
+import os
+from typing import Any
+
 import einops
 import torch
 import torch.nn.functional as F
@@ -10,8 +13,45 @@ from noether.modeling.functional.init import apply_init_method
 from noether.modeling.functional.rope import rope
 
 
+def _load_flash_attn3_interface() -> Any | None:
+    if not torch.cuda.is_available():
+        return None
+
+    try:
+        major, _ = torch.cuda.get_device_capability()
+    except RuntimeError:
+        return None
+
+    if major < 9:
+        return None
+
+    try:
+        import kernels
+    except ImportError:
+        return None
+
+    os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+
+    try:
+        kernel = kernels.get_kernel("varunneal/flash-attention-3")
+    except Exception:
+        return None
+
+    flash_attn_interface = getattr(kernel, "flash_attn_interface", None)
+    if flash_attn_interface is None:
+        return None
+    if not hasattr(flash_attn_interface, "flash_attn_func"):
+        return None
+
+    return flash_attn_interface
+
+
+_FLASH_ATTN3 = _load_flash_attn3_interface()
+
+
 class DotProductAttentionConfig(AttentionConfig):
     """Configuration for the Dot Product attention module."""
+
 
 
 class DotProductAttention(nn.Module):
@@ -39,6 +79,7 @@ class DotProductAttention(nn.Module):
         self.head_dim = config.hidden_dim // config.num_heads
         self.init_weights = config.init_weights
         self.use_rope = config.use_rope
+        self.use_flash_attn = config.use_flash_attn
         self.dropout = config.dropout
         self.proj_dropout = nn.Dropout(config.dropout)
 
@@ -91,9 +132,18 @@ class DotProductAttention(nn.Module):
         else:
             assert freqs is None
 
-        x = F.scaled_dot_product_attention(
-            q, k, v, attn_mask=attn_mask, dropout_p=self.dropout if self.training else 0.0
-        )
+        if self.use_flash_attn and attn_mask is None and _FLASH_ATTN3 is not None:
+            x = _FLASH_ATTN3.flash_attn_func(
+                q.transpose(1, 2),
+                k.transpose(1, 2),
+                v.transpose(1, 2),
+                dropout_p=self.dropout if self.training else 0.0,
+                causal=False,
+            ).transpose(1, 2)
+        else:
+            x = F.scaled_dot_product_attention(
+                q, k, v, attn_mask=attn_mask, dropout_p=self.dropout if self.training else 0.0
+            )
         x = einops.rearrange(x, "bs num_heads seqlen head_dim -> bs seqlen (num_heads head_dim)")
         x = self.proj_dropout(self.proj(x))
 
