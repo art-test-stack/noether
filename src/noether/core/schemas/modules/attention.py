@@ -54,6 +54,9 @@ class AttentionConfig(BaseModel):
     qk_norm: bool = Field(False)
     """Whether to apply layer normalization to the query and key features before computing attention scores."""
 
+    use_flash_attn: bool = False
+    """Whether to use the optional FlashAttention-3 kernel when available."""
+
     @model_validator(mode="after")
     def validate_hidden_dim_and_num_heads(self):
         if self.hidden_dim % self.num_heads != 0:
