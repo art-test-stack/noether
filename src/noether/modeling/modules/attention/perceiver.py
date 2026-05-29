@@ -9,6 +9,7 @@ from torch import nn
 from noether.core.schemas.modules.attention import AttentionConfig
 from noether.modeling.functional.init import apply_init_method
 from noether.modeling.functional.rope import rope
+from noether.modeling.modules.attention.flash_attention import flash_attn
 
 
 class PerceiverAttentionConfig(AttentionConfig):
@@ -66,6 +67,7 @@ class PerceiverAttention(nn.Module):
             self.k_norm = nn.Identity()
 
         apply_init_method(self, self.proj.weight, self.init_weights)
+        self.use_flash_attn = config.use_flash_attn
 
     def forward(
         self,
@@ -137,8 +139,14 @@ class PerceiverAttention(nn.Module):
             assert q_freqs is not None
             q = rope(q, freqs=q_freqs)
 
-        x = F.scaled_dot_product_attention(
-            q, k, v, attn_mask=attn_mask, dropout_p=self.dropout if self.training else 0.0
-        )
+        # Prefer FlashAttention when available and safe: no arbitrary mask.
+        if self.use_flash_attn and flash_attn.flash_attention_is_installed and attn_mask is None:
+            x = flash_attn.flash_attn_func(
+                q, k, v, dropout_p=self.dropout if self.training else 0.0, causal=False
+            )
+        else:
+            x = F.scaled_dot_product_attention(
+                q, k, v, attn_mask=attn_mask, dropout_p=self.dropout if self.training else 0.0
+            )
         x = einops.rearrange(x, "bs num_heads seqlen head_dim -> bs seqlen (num_heads head_dim)")
         return self.proj_dropout(self.proj(x)), new_cache

@@ -216,14 +216,14 @@ class ViT(nn.Module):
             tokens = tokens + x
 
         patch_mask: Tensor | None = None
-        if mask is not None:
+        if mask is not None: # TODO
             patch_mask = self.mask_patchify(mask)
             tokens = tokens * patch_mask.unsqueeze(-1).float()
 
         condition = F.silu(cond) if cond is not None else None
 
         attn_kwargs = {"freqs": rope_freqs}
-        if patch_mask is not None:
+        if patch_mask is not None: # TODO
             # Patch mask is also attention mask; (B, L) -> (B, 1, 1, L) so SDPA broadcasts across heads and queries
             attn_kwargs["attn_mask"] = patch_mask[:, None, None, :]
 

@@ -8,6 +8,7 @@ from pydantic import Field
 
 from noether.core.schemas.modules.attention import AttentionConfig
 from noether.modeling.modules.layers import LinearProjection, LinearProjectionConfig
+from noether.modeling.modules.attention.flash_attention import flash_attn
 
 
 class TransolverAttentionConfig(AttentionConfig):
@@ -155,12 +156,17 @@ class TransolverAttention(nn.Module):
 
         # attention among slice tokens
         q_slice_token, k_slice_token, v_slice_token = self.q(slice_token), self.k(slice_token), self.v(slice_token)
-        out_slice_token = F.scaled_dot_product_attention(
-            q_slice_token,
-            k_slice_token,
-            v_slice_token,
-            dropout_p=self.dropout if self.training else 0.0,
-        )
+        if self.use_flash_attn and flash_attn.flash_attention_is_installed:
+            out_slice_token = flash_attn.flash_attn_func(
+                q_slice_token, k_slice_token, v_slice_token, dropout_p=self.dropout if self.training else 0.0, causal=False
+            )
+        else:
+            out_slice_token = F.scaled_dot_product_attention(
+                q_slice_token,
+                k_slice_token,
+                v_slice_token,
+                dropout_p=self.dropout if self.training else 0.0,
+            )
 
         # deslice - project the slice tokens back to the original points
         out_x = torch.einsum("bhgc,bhng->bhnc", out_slice_token, slice_weights)
